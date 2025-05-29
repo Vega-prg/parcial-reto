@@ -58,8 +58,8 @@ class Pedido(models.Model):
 
     fecha = models.DateField()
     hora = models.TimeField()
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE)
-    sucursal = models.ForeignKey(Sucursal, on_delete=models.CASCADE)
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, null=True, blank=True)
+    sucursal = models.ForeignKey(Sucursal, on_delete=models.CASCADE, null=True, blank=True)
     canal = models.CharField(max_length=20, choices=CANAL_CHOICES)
     total_bruto = models.DecimalField(max_digits=10, decimal_places=2)
     total_descuento = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -99,11 +99,11 @@ class Promocion(models.Model):
 
     tipo = models.CharField(max_length=25, choices=TIPO_CHOICES)
     nombre = models.CharField(max_length=100, blank=True, null=True)
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE)
-    sucursal = models.ForeignKey(Sucursal, on_delete=models.CASCADE)
-    fecha_inicio = models.DateField(null=True, blank=True)
-    fecha_fin = models.DateField(null=True, blank=True)
-    canal = models.CharField(max_length=20, choices=CANAL_CHOICES)
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, null=True, blank=True)
+    sucursal = models.ForeignKey(Sucursal, on_delete=models.CASCADE, null=True, blank=True)
+    fecha_inicio = models.DateField()
+    fecha_fin = models.DateField()
+    canal = models.CharField(max_length=20, choices=CANAL_CHOICES, null=True, blank=True)
     estado = models.CharField(max_length=10, choices=ESTADO_CHOICES)
 
     categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True, blank=True)
@@ -144,8 +144,32 @@ class BeneficioPromocion(models.Model):
 
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE, null=True, blank=True)
     cantidad = models.PositiveIntegerField(null=True, blank=True)
-
     porcentaje = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
 
     def __str__(self):
         return f"Beneficio {self.tipo} - Condición {self.condicion_id}"
+
+
+class PromocionAplicada(models.Model):
+    pedido = models.ForeignKey(Pedido, on_delete=models.CASCADE)
+    promocion = models.ForeignKey(Promocion, on_delete=models.SET_NULL, null=True, blank=True)
+    detalle_pedido = models.ForeignKey(DetallePedido, on_delete=models.SET_NULL, null=True, blank=True)
+
+    tipo_beneficio = models.CharField(
+        max_length=15,
+        choices=BeneficioPromocion.TIPO_CHOICES
+    )
+
+    producto_bonificado = models.ForeignKey(
+        Producto,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='producto_bonificado'
+    )
+    cantidad_bonificada = models.PositiveIntegerField(null=True, blank=True)
+    porcentaje_descuento = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    monto_descuento = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    def __str__(self):
+        return f"Promoción '{self.promocion}' aplicada al Pedido #{self.pedido_id}"
